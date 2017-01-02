@@ -11,13 +11,15 @@ class HorizontalRule extends Component {
   }
 }
 
-// class Square extends Component {
-//   render() {
-//     return(
-//       <button className="square" onClick={() => this.props.onClick()}>{this.props.value}</button>
-//     );
-//   }
-// }
+{/*
+class Square extends Component {
+  render() {
+    return(
+      <button className="square" onClick={() => this.props.onClick()}>{this.props.value}</button>
+    );
+  }
+}
+*/}
 
 // Since Square is now stateless we can use this simplified syntax, neat!
 function Square(props) {
@@ -26,40 +28,15 @@ function Square(props) {
   );
 }
 
+{/*
+@TODO - Figure out how to comment stuff in JSX
 class Board extends Component {
-  constructor() {
-    super();
-    this.state = {
-      squares: Array(9).fill(null),
-      xIsNext: true
-    };
-  }
+  // 
   renderSquare(i) {
-    return <Square value={this.state.squares[i]} onClick={() => this.handleClick(i)} />;
+    return <Square value={this.props.squares[i]} onClick={() => this.props.onClick(i)} />;
   }
-  handleClick(i) {
-    const squares = this.state.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    squares[i] = this.playerSymbol();
-    this.setState({
-      squares: squares,
-      xIsNext: !this.state.xIsNext
-    });
-  }
-  playerSymbol() {
-    return this.state.xIsNext ? 'X' : 'O';
-  }
+  // 
   render() {
-    const winner = calculateWinner(this.state.squares);
-    let status;
-    if (winner) {
-      status = 'Winner: ' + winner;
-    }
-    else {
-      status = 'Next player: ' + this.playerSymbol();
-    }
     return (
       <div>
         <div className="status">{status}</div>
@@ -82,17 +59,105 @@ class Board extends Component {
     );
   }
 }
+*/}
+
+function Board(props) {
+  return (
+    <div>
+      <div className="status">Status</div>
+      <div className="board-row">
+        <Square value={props.squares[0]} onClick={() => props.onClick(0)} />
+        <Square value={props.squares[1]} onClick={() => props.onClick(1)} />
+        <Square value={props.squares[2]} onClick={() => props.onClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={props.squares[3]} onClick={() => props.onClick(3)} />
+        <Square value={props.squares[4]} onClick={() => props.onClick(4)} />
+        <Square value={props.squares[5]} onClick={() => props.onClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={props.squares[6]} onClick={() => props.onClick(6)} />
+        <Square value={props.squares[7]} onClick={() => props.onClick(7)} />
+        <Square value={props.squares[8]} onClick={() => props.onClick(8)} />
+      </div>
+    </div>
+  );
+}
 
 class Game extends Component {
+  // 
+  constructor() {
+    super();
+    this.state = {
+      history: [{
+        squares: Array(9).fill(null)
+      }],
+      xIsNext: true,
+      stepNumber: 0
+    };
+  }
+
+  // 
+  handleClick(i) {
+    const history = this.state.history;
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    squares[i] = playerSymbol(this.state.xIsNext);
+    this.setState({
+      history: history.concat([{
+        squares: squares
+      }]),
+      xIsNext: !this.state.xIsNext,
+      stepNumber: history.length
+    });
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) ? false : true
+    });
+  }
+
+  // 
   render() {
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? 
+        'Move #' + move :
+        'Game Start';
+      return (
+        <li key={move}>
+          <a href="#" onClick={() => this.jumpTo(move)}>{desc}</a>
+        </li>
+      );
+    });
+    
+    let status;
+    if (winner) {
+      status = 'Winner: ' + winner;
+    }
+    else {
+      status = 'Next player: ' + playerSymbol(this.state.xIsNext);
+    }
     return(
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board
+            squares={current.squares}
+            onClick={(i) => this.handleClick(i)}
+          />
         </div>
         <div className="game-info">
-          <div>{/* status */}</div>
-          <ol>{/* TODO */}</ol>
+          <div>{status}</div>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
@@ -138,6 +203,11 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+// 
+function playerSymbol(xIsNext) {
+  return xIsNext ? 'X' : 'O';
 }
 
 export default App;
